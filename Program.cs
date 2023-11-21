@@ -142,7 +142,8 @@ try
             if (isValid)
             {
                 logger.Info("Validation passed");
-                // TODO: save category to db
+                // save product to db
+                db.AddProduct(product);
                 // check for unique name
                 if (db.Products.Any(c => c.ProductName == product.ProductName))
                 {
@@ -153,7 +154,6 @@ try
                 else
                 {
                     logger.Info("Validation passed");
-                    // TODO: save category to db
                 }
             }
 

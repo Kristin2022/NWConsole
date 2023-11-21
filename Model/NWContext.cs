@@ -22,6 +22,13 @@ namespace NWConsole.Model
             this.SaveChanges();
         }
 
+         public void AddProduct(Product product)
+        {
+            this.Add(product);
+            this.SaveChanges();
+        }
+
+
         public virtual DbSet<Category> Categories { get; set; }
         public virtual DbSet<Customer> Customers { get; set; }
         public virtual DbSet<Employee> Employees { get; set; }
