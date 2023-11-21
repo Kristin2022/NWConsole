@@ -15,19 +15,20 @@ logger.Info("Program started");
 
 try
 {
-    
+
     var db = new NWContext();
     string choice;
     do
     {
         Console.WriteLine("1) Display Categories");
         Console.WriteLine("2) Add Category");
-          Console.WriteLine("3) Display Category and related products");
+        Console.WriteLine("3) Display Category and related products");
         Console.WriteLine("\"q\" to quit");
-            Console.WriteLine("4) Display all Categories and their related products");
+        Console.WriteLine("4) Display all Categories and their related products");
+        System.Console.WriteLine("5) Add a Product");
         choice = Console.ReadLine();
         Console.Clear();
-                logger.Info($"Option {choice} selected");
+        logger.Info($"Option {choice} selected");
         if (choice == "1")
         {
             var query = db.Categories.OrderBy(p => p.CategoryName);
@@ -41,14 +42,14 @@ try
             }
             Console.ForegroundColor = ConsoleColor.White;
         }
-                else if (choice == "2")
+        else if (choice == "2")
         {
             Category category = new Category();
             Console.WriteLine("Enter Category Name:");
             category.CategoryName = Console.ReadLine();
             Console.WriteLine("Enter the Category Description:");
             category.Description = Console.ReadLine();
-                        ValidationContext context = new ValidationContext(category, null, null);
+            ValidationContext context = new ValidationContext(category, null, null);
             List<ValidationResult> results = new List<ValidationResult>();
 
             var isValid = Validator.TryValidateObject(category, context, results, true);
@@ -56,7 +57,8 @@ try
             {
                 logger.Info("Validation passed");
                 // TODO: save category to db
-                                // check for unique name
+                //db.Add(category);
+                // check for unique name
                 if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
                 {
                     // generate validation error
@@ -67,6 +69,7 @@ try
                 {
                     logger.Info("Validation passed");
                     // TODO: save category to db
+
                 }
             }
             if (!isValid)
@@ -78,7 +81,7 @@ try
             }
 
         }
-           else if (choice == "3")
+        else if (choice == "3")
         {
             var query = db.Categories.OrderBy(p => p.CategoryId);
 
@@ -91,17 +94,17 @@ try
             Console.ForegroundColor = ConsoleColor.White;
 
             int id = int.Parse(Console.ReadLine());
-            Console.Clear();
+            //Console.Clear();
             logger.Info($"CategoryId {id} selected");
             Category category = db.Categories.Include("Products").FirstOrDefault(c => c.CategoryId == id);
             Console.WriteLine($"{category.CategoryName} - {category.Description}");
-                foreach (Product p in category.Products)
+            foreach (Product p in category.Products)
             {
-                  Console.WriteLine($"\t{p.ProductName}");
+                Console.WriteLine($"\t{p.ProductName}");
             }
-        
+
         }
-              else if (choice == "4")
+        else if (choice == "4")
         {
             var query = db.Categories.Include("Products").OrderBy(p => p.CategoryId);
             foreach (var item in query)
@@ -113,8 +116,49 @@ try
                 }
             }
         }
-        Console.WriteLine();
+        else if (choice == "5")
+        {
+            var query = db.Categories.OrderBy(p => p.CategoryId);
 
+            Console.WriteLine("Select the category whose products you want to add:");
+            Console.ForegroundColor = ConsoleColor.DarkRed;
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.CategoryId}) {item.CategoryName}");
+            }
+            Console.ForegroundColor = ConsoleColor.White;
+
+            int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+            Product product = new Product();
+
+            Console.WriteLine("Enter Product Name:");
+            product.ProductName = Console.ReadLine();
+            Console.WriteLine("Enter the Product Description:");
+            product.ProductName = Console.ReadLine();
+            ValidationContext context = new ValidationContext(product, null, null);
+            List<ValidationResult> results = new List<ValidationResult>();
+
+            var isValid = Validator.TryValidateObject(product, context, results, true);
+            if (isValid)
+            {
+                logger.Info("Validation passed");
+                // TODO: save category to db
+                // check for unique name
+                if (db.Products.Any(c => c.ProductName == product.ProductName))
+                {
+                    // generate validation error
+                    isValid = false;
+                    results.Add(new ValidationResult("Name exists", new string[] { "ProductName" }));
+                }
+                else
+                {
+                    logger.Info("Validation passed");
+                    // TODO: save category to db
+                }
+            }
+
+        }
     } while (choice.ToLower() != "q");
 }
 catch (Exception ex)
