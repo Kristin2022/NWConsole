@@ -56,8 +56,7 @@ try
             if (isValid)
             {
                 logger.Info("Validation passed");
-                // TODO: save category to db
-                //db.Add(category);
+                logger.Info("Category added - {category}", category.CategoryName);
                 // check for unique name
                 if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
                 {
@@ -68,8 +67,8 @@ try
                 else
                 {
                     logger.Info("Validation passed");
-                    // TODO: save category to db
-
+                    // save category to db
+                    db.AddCategory(category);
                 }
             }
             if (!isValid)

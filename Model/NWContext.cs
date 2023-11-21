@@ -16,6 +16,11 @@ namespace NWConsole.Model
             : base(options)
         {
         }
+        public void AddCategory(Category category)
+        {
+            this.Categories.Add(category);
+            this.SaveChanges();
+        }
 
         public virtual DbSet<Category> Categories { get; set; }
         public virtual DbSet<Customer> Customers { get; set; }
@@ -28,7 +33,7 @@ namespace NWConsole.Model
         public virtual DbSet<Supplier> Suppliers { get; set; }
         public virtual DbSet<Territory> Territories { get; set; }
 
-     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
