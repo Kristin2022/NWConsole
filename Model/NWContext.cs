@@ -22,7 +22,7 @@ namespace NWConsole.Model
             this.SaveChanges();
         }
 
-         public void AddProduct(Product product)
+         public void AddProducts(Product product)
         {
             this.Add(product);
             this.SaveChanges();

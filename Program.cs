@@ -26,6 +26,7 @@ try
         Console.WriteLine("\"q\" to quit");
         Console.WriteLine("4) Display all Categories and their related products");
         System.Console.WriteLine("5) Add a Product");
+        System.Console.WriteLine("6) Edit a Product");
         choice = Console.ReadLine();
         Console.Clear();
         logger.Info($"Option {choice} selected");
@@ -44,6 +45,7 @@ try
         }
         else if (choice == "2")
         {
+            Console.ForegroundColor = ConsoleColor.DarkBlue;
             Category category = new Category();
             Console.WriteLine("Enter Category Name:");
             category.CategoryName = Console.ReadLine();
@@ -85,12 +87,12 @@ try
             var query = db.Categories.OrderBy(p => p.CategoryId);
 
             Console.WriteLine("Select the category whose products you want to display:");
-            Console.ForegroundColor = ConsoleColor.DarkRed;
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
             foreach (var item in query)
             {
                 Console.WriteLine($"{item.CategoryId}) {item.CategoryName}");
             }
-            Console.ForegroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
 
             int id = int.Parse(Console.ReadLine());
             //Console.Clear();
@@ -105,6 +107,7 @@ try
         }
         else if (choice == "4")
         {
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
             var query = db.Categories.Include("Products").OrderBy(p => p.CategoryId);
             foreach (var item in query)
             {
@@ -113,6 +116,7 @@ try
                 {
                     Console.WriteLine($"\t{p.ProductName}");
                 }
+                 Console.ForegroundColor = ConsoleColor.DarkGreen;
             }
         }
         else if (choice == "5")
@@ -120,7 +124,7 @@ try
             var query = db.Categories.OrderBy(p => p.CategoryId);
 
             Console.WriteLine("Select the category whose products you want to add:");
-            Console.ForegroundColor = ConsoleColor.DarkRed;
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
             foreach (var item in query)
             {
                 Console.WriteLine($"{item.CategoryId}) {item.CategoryName}");
@@ -143,7 +147,7 @@ try
             {
                 logger.Info("Validation passed");
                 // save product to db
-                db.AddProduct(product);
+                db.AddProducts(product);
                 // check for unique name
                 if (db.Products.Any(c => c.ProductName == product.ProductName))
                 {
@@ -151,6 +155,7 @@ try
                     isValid = false;
                     results.Add(new ValidationResult("Name exists", new string[] { "ProductName" }));
                 }
+
                 else
                 {
                     logger.Info("Validation passed");
@@ -158,6 +163,24 @@ try
             }
 
         }
+        else if (choice == "6")
+        {
+            var query = db.Products.OrderBy(p => p.ProductId);
+
+            Console.WriteLine("Select the product you want to edit:");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.ProductId}) {item.ProductName}");
+            }
+            Console.ForegroundColor = ConsoleColor.White;
+
+            int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+            Product product = new Product();
+
+        }
+
     } while (choice.ToLower() != "q");
 }
 catch (Exception ex)
