@@ -5,6 +5,14 @@ using NWConsole.Model;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
+/*
+Add new records to the Products table
+Edit a specified record from the Products table
+Display all records in the Products table (ProductName only) - user decides if they want to see all products, discontinued products, or active (not discontinued) products. Discontinued products should be distinguished from active products.
+Display a specific Product (all product fields should be displayed)
+Use NLog to track user functions*/
+
 
 // See https://aka.ms/new-console-template for more information
 string path = Directory.GetCurrentDirectory() + "\\nlog.config";
@@ -33,6 +41,7 @@ try
         System.Console.WriteLine("6) Edit a Product");
         System.Console.WriteLine("7) Select what you want to display of products (all, discontinued, or active)");
         System.Console.WriteLine("8) Delete a product");
+        System.Console.WriteLine("9) Delete a category");
         Console.WriteLine("\"q\" to quit");
         choice = Console.ReadLine();
         System.Console.WriteLine("");
@@ -217,6 +226,22 @@ try
             System.Console.WriteLine("3) Active products");
             string productChoice = Console.ReadLine();
             DisplayProducts(db, productChoice);
+
+            // ValidationContext context = new ValidationContext(category, null, null);
+            // List<ValidationResult> results = new List<ValidationResult>();
+
+            // var isValid = Validator.TryValidateObject(category, context, results, true);
+            // if (isValid)
+            // {
+            //     logger.Info("Validation passed");
+            //     logger.Info("Category added - {category}", category.CategoryName);
+            //     // check for unique name
+            //     if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
+            //     {
+            //         // generate validation error
+            //         isValid = false;
+            //         results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
+            //     }
         }
         // Delete a product   
         else if (choice == "8")
@@ -234,6 +259,38 @@ try
                 Console.WriteLine("Product not found");
             }
         }
+        // Delete a category  
+else if (choice == "9")
+{
+    Console.WriteLine("Enter the name of the category you want to delete:");
+    string name = Console.ReadLine();
+    var category = db.Categories.FirstOrDefault(c => c.CategoryName == name);
+    if (category != null)
+    {
+        // Check if the category has any related products
+        if (category.Products.Any())
+        {
+            Console.WriteLine("This category has related products. Please delete or reassign these products before deleting the category.");
+        }
+        else
+        {
+            db.Categories.Remove(category);
+            db.SaveChanges();
+            if (db.Categories.Any(c => c.CategoryName == name))
+            {
+                Console.WriteLine("Failed to delete the category.");
+            }
+            else
+            {
+                Console.WriteLine("Category deleted successfully.");
+            }
+        }
+    }
+    else
+    {
+        Console.WriteLine("Category not found");
+    }
+}
 
     } while (choice.ToLower() != "q");
 }
