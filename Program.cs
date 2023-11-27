@@ -7,9 +7,9 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 /*
-Add new records to the Products table
+
 Edit a specified record from the Products table
-Display all records in the Products table (ProductName only) - user decides if they want to see all products, discontinued products, or active (not discontinued) products. Discontinued products should be distinguished from active products.
+
 Display a specific Product (all product fields should be displayed)
 Use NLog to track user functions*/
 
@@ -184,7 +184,7 @@ try
             }
 
         }
-        // Edit a Product
+        // TODO Edit a Product
         else if (choice == "6")
         {
             var query = db.Products.OrderBy(p => p.ProductId);
@@ -194,13 +194,17 @@ try
                 Console.WriteLine($"{item.ProductId}) {item.ProductName}");
             }
             Console.WriteLine("Enter product ID you would like to edit: ");
+
             int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+            Product product = new Product();
+
             db.Products.Find(id);
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.ForegroundColor = ConsoleColor.DarkBlue;
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.Clear();
-            Product product = new Product();
+            Product Getproduct = new Product();
             if (product != null)
             {
                 System.Console.WriteLine("Enter updated name of product");
@@ -209,15 +213,15 @@ try
                 Console.ReadLine();
 
                 db.SaveChanges();
-                logger.Info($"Product {id}and {product}");
+                logger.Info($"Product {id} and {product}");
             }
             else
             {
-                logger.Info($"Product {id} and  {product}");
+                logger.Info($"Product {id} and {product}");
             }
 
         }
-        //Select what you want to display of products
+        //Select what you want to display of products works
         System.Console.WriteLine("7) Select what you want to display of products");
         if (choice == "7")
         {
@@ -226,24 +230,8 @@ try
             System.Console.WriteLine("3) Active products");
             string productChoice = Console.ReadLine();
             DisplayProducts(db, productChoice);
-
-            // ValidationContext context = new ValidationContext(category, null, null);
-            // List<ValidationResult> results = new List<ValidationResult>();
-
-            // var isValid = Validator.TryValidateObject(category, context, results, true);
-            // if (isValid)
-            // {
-            //     logger.Info("Validation passed");
-            //     logger.Info("Category added - {category}", category.CategoryName);
-            //     // check for unique name
-            //     if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
-            //     {
-            //         // generate validation error
-            //         isValid = false;
-            //         results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
-            //     }
         }
-        // Delete a product   
+        // Delete a product works 
         else if (choice == "8")
         {
             Console.WriteLine("Enter the ID of the product you want to delete:");
@@ -259,38 +247,38 @@ try
                 Console.WriteLine("Product not found");
             }
         }
-        // Delete a category  
-else if (choice == "9")
-{
-    Console.WriteLine("Enter the name of the category you want to delete:");
-    string name = Console.ReadLine();
-    var category = db.Categories.FirstOrDefault(c => c.CategoryName == name);
-    if (category != null)
-    {
-        // Check if the category has any related products
-        if (category.Products.Any())
+        // Delete a category works
+        else if (choice == "9")
         {
-            Console.WriteLine("This category has related products. Please delete or reassign these products before deleting the category.");
-        }
-        else
-        {
-            db.Categories.Remove(category);
-            db.SaveChanges();
-            if (db.Categories.Any(c => c.CategoryName == name))
+            Console.WriteLine("Enter the name of the category you want to delete:");
+            string name = Console.ReadLine();
+            var category = db.Categories.FirstOrDefault(c => c.CategoryName == name);
+            if (category != null)
             {
-                Console.WriteLine("Failed to delete the category.");
+                // Check if the category has any related products
+                if (category.Products.Any())
+                {
+                    Console.WriteLine("This category has related products. Please delete or reassign these products before deleting the category.");
+                }
+                else
+                {
+                    db.Categories.Remove(category);
+                    db.SaveChanges();
+                    if (db.Categories.Any(c => c.CategoryName == name))
+                    {
+                        Console.WriteLine("Failed to delete the category.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Category deleted successfully.");
+                    }
+                }
             }
             else
             {
-                Console.WriteLine("Category deleted successfully.");
+                Console.WriteLine("Category not found");
             }
         }
-    }
-    else
-    {
-        Console.WriteLine("Category not found");
-    }
-}
 
     } while (choice.ToLower() != "q");
 }
@@ -299,7 +287,25 @@ catch (Exception ex)
     logger.Error(ex.Message);
 }
 
-void DisplayProducts(NWContext db, string productChoice)
+
+static Product GetProduct(NWContext db, Logger logger)
+{
+    var products = db.Products.OrderBy(p => p.ProductId);
+    foreach (Product p in products)
+    {
+        Console.WriteLine($"{p.ProductId}: {p.ProductName}");
+    }
+    if (int.TryParse(Console.ReadLine(), out int ProductId))
+    {
+        Product product = db.Products.FirstOrDefault(p => p.ProductId == ProductId);
+        if (product != null)
+        {
+            return product;
+        }
+    }
+    return null;
+}
+static void DisplayProducts(NWContext db, string productChoice)
 {
     IQueryable<Product> query;
 
