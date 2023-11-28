@@ -28,15 +28,12 @@ try
     string choice;
     do
     {
-        //display works
         Console.WriteLine("1) Display Categories");
-        //add category works 
         Console.WriteLine("2) Add Category");
-        //display category & related products works
         Console.WriteLine("3) Display Category and related products");
         //all categories display 
         //TODO related added products do not display
-        Console.WriteLine("4) Display ALL Categories and their related products");
+        Console.WriteLine("4) Display all Categories and their related products");
         System.Console.WriteLine("5) Add a Product");
         System.Console.WriteLine("6) Edit a Product");
         System.Console.WriteLine("7) Select what you want to display of products (all, discontinued, or active)");
@@ -47,7 +44,7 @@ try
         System.Console.WriteLine("");
         Console.Clear();
         logger.Info($"Option {choice} selected");
-        //Display Categories works
+        //Display Categories 
         if (choice == "1")
         {
             var query = db.Categories.OrderBy(p => p.CategoryName);
@@ -61,7 +58,6 @@ try
             }
             Console.ForegroundColor = ConsoleColor.White;
         }
-        // Add Category works
         else if (choice == "2")
         {
             Console.ForegroundColor = ConsoleColor.DarkBlue;
@@ -101,21 +97,19 @@ try
             }
 
         }
-        // Display Category and related products works
         else if (choice == "3")
         {
             var query = db.Categories.OrderBy(p => p.CategoryId);
 
             Console.WriteLine("Select the category whose products you want to display:");
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.ForegroundColor = ConsoleColor.DarkRed;
             foreach (var item in query)
             {
                 Console.WriteLine($"{item.CategoryId}) {item.CategoryName}");
             }
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-
+            Console.ForegroundColor = ConsoleColor.White;
             int id = int.Parse(Console.ReadLine());
-            //Console.Clear();
+            Console.Clear();
             logger.Info($"CategoryId {id} selected");
             Category category = db.Categories.Include("Products").FirstOrDefault(c => c.CategoryId == id);
             Console.WriteLine($"{category.CategoryName} - {category.Description}");
@@ -128,7 +122,6 @@ try
         //Display all Categories and their related products
         else if (choice == "4")
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
             var query = db.Categories.Include("Products").OrderBy(p => p.CategoryId);
             foreach (var item in query)
             {
@@ -137,19 +130,60 @@ try
                 {
                     Console.WriteLine($"\t{p.ProductName}");
                 }
-                Console.ForegroundColor = ConsoleColor.White;
             }
         }
         // Add new records to the Products table works
         else if (choice == "5")
         {
             var query = db.Categories.OrderBy(p => p.CategoryId);
-
+            Product product = new Product();
             Console.WriteLine("Select the category whose products you want to add");
             Console.ForegroundColor = ConsoleColor.DarkBlue;
             foreach (var item in query)
             {
                 Console.WriteLine($"{item.CategoryId}) {item.CategoryName}");
+            }
+            Console.ForegroundColor = ConsoleColor.White;
+
+            product.CategoryId = int.Parse(Console.ReadLine());
+            Console.Clear();
+
+            
+            Console.WriteLine("Enter Product Name:");
+            product.ProductName = Console.ReadLine();
+            ValidationContext context = new ValidationContext(product, null, null);
+            List<ValidationResult> results = new List<ValidationResult>();
+
+            var isValid = Validator.TryValidateObject(product, context, results, true);
+            if (isValid)
+            {
+                logger.Info("Validation passed");
+                // save product to db
+                db.AddProducts(product);
+            
+                // check for unique name
+                if (db.Products.Any(c => c.ProductName == product.ProductName))
+                {
+                    // generate validation error
+                    isValid = false;
+                    results.Add(new ValidationResult("Name exists", new string[] { "ProductName" }));
+                }
+                else
+                {
+                    logger.Info("Validation passed");
+                }
+            }
+        }
+        // Edit a Product
+        else if (choice == "6")
+        {
+            var query = db.Products.OrderBy(p => p.ProductId);
+
+            Console.WriteLine("Select the product id you want to edit");
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.ProductId}) {item.ProductName}");
             }
             Console.ForegroundColor = ConsoleColor.White;
 
@@ -169,7 +203,7 @@ try
             {
                 logger.Info("Validation passed");
                 // save product to db
-                db.AddProducts(product);
+                db.EditProduct(product);
                 // check for unique name
                 if (db.Products.Any(c => c.ProductName == product.ProductName))
                 {
@@ -184,43 +218,42 @@ try
             }
 
         }
-        // TODO Edit a Product
-        else if (choice == "6")
-        {
-            var query = db.Products.OrderBy(p => p.ProductId);
+        // else if (choice == "6")
+        // {
+        //     var query = db.Products.OrderBy(p => p.ProductId);
 
-            foreach (var item in query)
-            {
-                Console.WriteLine($"{item.ProductId}) {item.ProductName}");
-            }
-            Console.WriteLine("Enter product ID you would like to edit: ");
+        //     foreach (var item in query)
+        //     {
+        //         Console.WriteLine($"{item.ProductId}) {item.ProductName}");
+        //     }
+        //     Console.WriteLine("Enter product ID you would like to edit: ");
 
-            int id = int.Parse(Console.ReadLine());
-            Console.Clear();
-            Product product = new Product();
+        //     int id = int.Parse(Console.ReadLine());
+        //     Console.Clear();
+        //     Product product = new Product();
 
-            db.Products.Find(id);
-            Console.ForegroundColor = ConsoleColor.DarkBlue;
+        //     db.Products.Find(id);
+        //     Console.ForegroundColor = ConsoleColor.DarkBlue;
 
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.Clear();
-            Product Getproduct = new Product();
-            if (product != null)
-            {
-                System.Console.WriteLine("Enter updated name of product");
-                product.ProductName = Console.ReadLine();
-                System.Console.WriteLine("Enter the new product description: ");
-                Console.ReadLine();
+        //     Console.ForegroundColor = ConsoleColor.White;
+        //     Console.Clear();
+        //     Product Getproduct = new Product();
+        //     if (product != null)
+        //     {
+        //         System.Console.WriteLine("Enter updated name of product");
+        //         product.ProductName = Console.ReadLine();
+        //         System.Console.WriteLine("Enter the new product description: ");
+        //         Console.ReadLine();
 
-                db.SaveChanges();
-                logger.Info($"Product {id} and {product}");
-            }
-            else
-            {
-                logger.Info($"Product {id} and {product}");
-            }
+        //         db.SaveChanges();
+        //         logger.Info($"Product {id} and {product}");
+        //     }
+        //     else
+        //     {
+        //         logger.Info($"Product {id} and {product}");
+        //     }
 
-        }
+        // }
         //Select what you want to display of products works
         System.Console.WriteLine("7) Select what you want to display of products");
         if (choice == "7")
