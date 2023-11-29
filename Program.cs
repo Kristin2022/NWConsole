@@ -31,19 +31,19 @@ try
         Console.WriteLine("1) Display Categories");
         Console.WriteLine("2) Add Category");
         Console.WriteLine("3) Display Category and related products");
-        //all categories display 
-        //TODO related added products do not display
         Console.WriteLine("4) Display all Categories and their related products");
         System.Console.WriteLine("5) Add a Product");
         System.Console.WriteLine("6) Edit a Product");
         System.Console.WriteLine("7) Select what you want to display of products (all, discontinued, or active)");
         System.Console.WriteLine("8) Delete a product");
         System.Console.WriteLine("9) Delete a category");
+        System.Console.WriteLine("10) Select a product to view all of its information");
         Console.WriteLine("\"q\" to quit");
         choice = Console.ReadLine();
         System.Console.WriteLine("");
         Console.Clear();
         logger.Info($"Option {choice} selected");
+        
         //Display Categories 
         if (choice == "1")
         {
@@ -58,6 +58,7 @@ try
             }
             Console.ForegroundColor = ConsoleColor.White;
         }
+        //Add Category
         else if (choice == "2")
         {
             Console.ForegroundColor = ConsoleColor.DarkBlue;
@@ -97,6 +98,7 @@ try
             }
 
         }
+        //Display Category and related products
         else if (choice == "3")
         {
             var query = db.Categories.OrderBy(p => p.CategoryId);
@@ -132,7 +134,7 @@ try
                 }
             }
         }
-        // Add new records to the Products table works
+        // Add new records to the Products table
         else if (choice == "5")
         {
             var query = db.Categories.OrderBy(p => p.CategoryId);
@@ -148,7 +150,6 @@ try
             product.CategoryId = int.Parse(Console.ReadLine());
             Console.Clear();
 
-            
             Console.WriteLine("Enter Product Name:");
             product.ProductName = Console.ReadLine();
             ValidationContext context = new ValidationContext(product, null, null);
@@ -160,7 +161,7 @@ try
                 logger.Info("Validation passed");
                 // save product to db
                 db.AddProducts(product);
-            
+
                 // check for unique name
                 if (db.Products.Any(c => c.ProductName == product.ProductName))
                 {
@@ -178,22 +179,18 @@ try
         else if (choice == "6")
         {
             var query = db.Products.OrderBy(p => p.ProductId);
-
+            Product product = new Product();
             Console.WriteLine("Select the product id you want to edit");
             Console.ForegroundColor = ConsoleColor.DarkGray;
             foreach (var item in query)
             {
-                Console.WriteLine($"{item.ProductId}) {item.ProductName}");
+                Console.WriteLine($"{item.CategoryId}) {item.ProductId}) {item.ProductName}");
             }
             Console.ForegroundColor = ConsoleColor.White;
-
             int id = int.Parse(Console.ReadLine());
             Console.Clear();
-            Product product = new Product();
 
             Console.WriteLine("Enter Product Name:");
-            product.ProductName = Console.ReadLine();
-            Console.WriteLine("Enter the Product Description:");
             product.ProductName = Console.ReadLine();
             ValidationContext context = new ValidationContext(product, null, null);
             List<ValidationResult> results = new List<ValidationResult>();
@@ -213,62 +210,37 @@ try
                 }
                 else
                 {
+                    db.SaveChanges();
                     logger.Info("Validation passed");
                 }
             }
 
+
         }
-        // else if (choice == "6")
-        // {
-        //     var query = db.Products.OrderBy(p => p.ProductId);
-
-        //     foreach (var item in query)
-        //     {
-        //         Console.WriteLine($"{item.ProductId}) {item.ProductName}");
-        //     }
-        //     Console.WriteLine("Enter product ID you would like to edit: ");
-
-        //     int id = int.Parse(Console.ReadLine());
-        //     Console.Clear();
-        //     Product product = new Product();
-
-        //     db.Products.Find(id);
-        //     Console.ForegroundColor = ConsoleColor.DarkBlue;
-
-        //     Console.ForegroundColor = ConsoleColor.White;
-        //     Console.Clear();
-        //     Product Getproduct = new Product();
-        //     if (product != null)
-        //     {
-        //         System.Console.WriteLine("Enter updated name of product");
-        //         product.ProductName = Console.ReadLine();
-        //         System.Console.WriteLine("Enter the new product description: ");
-        //         Console.ReadLine();
-
-        //         db.SaveChanges();
-        //         logger.Info($"Product {id} and {product}");
-        //     }
-        //     else
-        //     {
-        //         logger.Info($"Product {id} and {product}");
-        //     }
-
-        // }
-        //Select what you want to display of products works
-        System.Console.WriteLine("7) Select what you want to display of products");
-        if (choice == "7")
+        //Select what you want to display of products 
+        else if (choice == "7")
         {
+            System.Console.WriteLine("7) Select what you want to display of products");
             System.Console.WriteLine("1) All products");
             System.Console.WriteLine("2) Discontinued products");
             System.Console.WriteLine("3) Active products");
             string productChoice = Console.ReadLine();
             DisplayProducts(db, productChoice);
         }
-        // Delete a product works 
+        // Delete a product  
         else if (choice == "8")
         {
-            Console.WriteLine("Enter the ID of the product you want to delete:");
+            var query = db.Products.OrderBy(p => p.ProductId);
+
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.ProductId}) {item.ProductName}");
+            }
+
             int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+
+            Console.WriteLine("Enter the ID of the product you want to delete:");
             var product = db.Products.Find(id);
             if (product != null)
             {
@@ -280,15 +252,21 @@ try
                 Console.WriteLine("Product not found");
             }
         }
-        // Delete a category works
+        // Delete a category 
         else if (choice == "9")
         {
-            Console.WriteLine("Enter the name of the category you want to delete:");
+            var query = db.Categories.OrderBy(p => p.CategoryId);
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.CategoryId} {item.CategoryName}");
+            }
+            int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+            Console.WriteLine("Enter the id of the category you want to delete:");
             string name = Console.ReadLine();
-            var category = db.Categories.FirstOrDefault(c => c.CategoryName == name);
+            var category = db.Categories.FirstOrDefault(c => c.CategoryId == id);
             if (category != null)
             {
-                // Check if the category has any related products
                 if (category.Products.Any())
                 {
                     Console.WriteLine("This category has related products. Please delete or reassign these products before deleting the category.");
@@ -312,7 +290,30 @@ try
                 Console.WriteLine("Category not found");
             }
         }
+        //Display a specific Product (all product fields should be displayed)
+        else if (choice == "10")
+        {
+            var query = db.Products.OrderBy(p => p.ProductId);
 
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.ProductId}, {item.ProductName}");
+            }
+
+            Console.WriteLine("Enter the Product Id you would like to view");
+            int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+
+            var product = db.Products.Find(id);
+            if (product != null)
+            {
+                Console.WriteLine($"Product Id: {product.ProductId}, Product Name {product.ProductName}, Supplier Id: {product.SupplierId}\n Category Id: {product.CategoryId}\n Quantity per unit: {product.QuantityPerUnit}\n Unit price: {product.UnitPrice}\n Units in stock: {product.UnitsInStock}\n Units on order {product.UnitsOnOrder}\n Reorder level: {product.ReorderLevel}\n Discontinued: {product.Discontinued}\n");
+            }
+            else
+            {
+                Console.WriteLine("Product not found");
+            }
+        }
     } while (choice.ToLower() != "q");
 }
 catch (Exception ex)
@@ -320,28 +321,9 @@ catch (Exception ex)
     logger.Error(ex.Message);
 }
 
-
-static Product GetProduct(NWContext db, Logger logger)
-{
-    var products = db.Products.OrderBy(p => p.ProductId);
-    foreach (Product p in products)
-    {
-        Console.WriteLine($"{p.ProductId}: {p.ProductName}");
-    }
-    if (int.TryParse(Console.ReadLine(), out int ProductId))
-    {
-        Product product = db.Products.FirstOrDefault(p => p.ProductId == ProductId);
-        if (product != null)
-        {
-            return product;
-        }
-    }
-    return null;
-}
 static void DisplayProducts(NWContext db, string productChoice)
 {
     IQueryable<Product> query;
-
     switch (productChoice)
     {
         case "1": // All products
@@ -358,10 +340,12 @@ static void DisplayProducts(NWContext db, string productChoice)
             return;
     }
 
+    int count = query.Count();
+    Console.WriteLine($"{count} records returned");
+
     foreach (var product in query)
     {
-        Console.WriteLine($"Product ID: {product.ProductId}, Product Name: {product.ProductName}");
+        Console.WriteLine($"Product Name: {product.ProductName}");
     }
 }
-
 logger.Info("Program ended");
