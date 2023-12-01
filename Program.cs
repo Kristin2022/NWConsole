@@ -7,7 +7,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 /*
-
+Add new records to the Categories table
+Edit a specified record from the Categories table
 Display all Categories in the Categories table (CategoryName and Description)
 Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
 Display a specific Category and its related active product data (CategoryName, ProductName)
@@ -39,6 +40,7 @@ try
         System.Console.WriteLine("9) Delete a category");
         System.Console.WriteLine("10) Select a product to view all of its information");
         System.Console.WriteLine("11) Edit category");
+        System.Console.WriteLine("12) Display Categories and Category descirption");
         Console.WriteLine("\"q\" to quit");
         choice = Console.ReadLine();
         System.Console.WriteLine("");
@@ -98,6 +100,8 @@ try
                     logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
                 }
             }
+        }
+
         //Display Category and related products
         else if (choice == "3")
         {
@@ -372,7 +376,7 @@ try
 
             Console.WriteLine("Edit Category Name:");
             string newName = Console.ReadLine();
-            category.CategoryName = newName; // Set the new name here
+            category.CategoryName = newName;
 
             ValidationContext context = new ValidationContext(category, null, null); // Validate the updated object
             List<ValidationResult> results = new List<ValidationResult>();
@@ -396,6 +400,21 @@ try
                     db.SaveChanges();
                     logger.Info("Validation passed");
                 }
+            }
+        }
+
+        // else if (choice == "12")
+        {
+            if (choice == "12")
+            {
+                var query = db.Categories.OrderBy(p => p.CategoryName);
+
+                Console.ForegroundColor = ConsoleColor.Blue;
+                foreach (var category in query)
+                {
+                    Console.WriteLine($"{category.CategoryName} - {category.Description}");
+                }
+                Console.ForegroundColor = ConsoleColor.White;
             }
         }
     } while (choice.ToLower() != "q");
