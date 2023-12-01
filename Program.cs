@@ -7,8 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 /*
-Add new records to the Categories table
-Edit a specified record from the Categories table
+
 Display all Categories in the Categories table (CategoryName and Description)
 Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
 Display a specific Category and its related active product data (CategoryName, ProductName)
@@ -88,7 +87,8 @@ try
                 {
                     logger.Info("Validation passed");
                     // save category to db
-                    db.AddCategory(category);
+                    db.Add(category);
+                    db.SaveChanges();
                 }
             }
             if (!isValid)
@@ -98,8 +98,6 @@ try
                     logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
                 }
             }
-
-        }
         //Display Category and related products
         else if (choice == "3")
         {
@@ -181,20 +179,24 @@ try
         else if (choice == "6")
         {
             var query = db.Products.OrderBy(p => p.ProductId);
-            Product product = new Product();
             Console.WriteLine("Select the product id you want to edit");
-            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.ForegroundColor = ConsoleColor.DarkBlue;
             foreach (var item in query)
             {
-                Console.WriteLine($"{item.CategoryId}) {item.ProductId}) {item.ProductName}");
+                Console.WriteLine($"{item.ProductId}) {item.ProductName}");
             }
             Console.ForegroundColor = ConsoleColor.White;
             int id = int.Parse(Console.ReadLine());
             Console.Clear();
 
+            // Retrieve the product from the database
+            Product product = db.Products.Find(id);
+
             Console.WriteLine("Edit Product Name:");
-            product.ProductName = Console.ReadLine();
-            ValidationContext context = new ValidationContext(product, null, null);
+            string newName = Console.ReadLine();
+            product.ProductName = newName; // Set the new name here
+
+            ValidationContext context = new ValidationContext(product, null, null); // Validate the updated object
             List<ValidationResult> results = new List<ValidationResult>();
 
             var isValid = Validator.TryValidateObject(product, context, results, true);
@@ -202,21 +204,18 @@ try
             {
                 logger.Info("Validation passed");
                 // save product to db
-                db.EditProduct(product);
-                // check for unique name
-                if (db.Products.Any(c => c.ProductName == product.ProductName))
-                {
-                    // generate validation error
-                    isValid = false;
-                    results.Add(new ValidationResult("Name exists", new string[] { "ProductName" }));
-                }
-                else
-                {
-                    db.SaveChanges();
-                    logger.Info("Validation passed");
-                }
+                db.Update(product);
+                db.SaveChanges();
+                logger.Info("Validation passed");
+            }
+            else if (db.Products.Any(c => c.ProductName == product.ProductName))
+            {
+                // generate validation error
+                isValid = false;
+                results.Add(new ValidationResult("Name exists", new string[] { "ProductName" }));
             }
         }
+
         //Select what you want to display of products 
         else if (choice == "7")
         {
@@ -399,7 +398,6 @@ try
                 }
             }
         }
-
     } while (choice.ToLower() != "q");
 }
 catch (Exception ex)
