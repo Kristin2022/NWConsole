@@ -22,7 +22,7 @@ namespace NWConsole.Model
             this.SaveChanges();
         }
 
-         public void AddProducts(Product product)
+        public void AddProducts(Product product)
         {
             this.Add(product);
             this.SaveChanges();
@@ -31,6 +31,12 @@ namespace NWConsole.Model
         public void EditProduct(Product product)
         {
             this.EditProduct(product);
+            this.SaveChanges();
+        }
+
+        public void EditCategory(Category category)
+        {
+            this.EditCategory(category);
             this.SaveChanges();
         }
 

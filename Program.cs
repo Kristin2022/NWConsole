@@ -7,11 +7,12 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 /*
-
-Edit a specified record from the Products table
-
-Display a specific Product (all product fields should be displayed)
-Use NLog to track user functions*/
+Add new records to the Categories table
+Edit a specified record from the Categories table
+Display all Categories in the Categories table (CategoryName and Description)
+Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
+Display a specific Category and its related active product data (CategoryName, ProductName)
+*/
 
 
 // See https://aka.ms/new-console-template for more information
@@ -38,12 +39,13 @@ try
         System.Console.WriteLine("8) Delete a product");
         System.Console.WriteLine("9) Delete a category");
         System.Console.WriteLine("10) Select a product to view all of its information");
+        System.Console.WriteLine("11) Edit category");
         Console.WriteLine("\"q\" to quit");
         choice = Console.ReadLine();
         System.Console.WriteLine("");
         Console.Clear();
         logger.Info($"Option {choice} selected");
-        
+
         //Display Categories 
         if (choice == "1")
         {
@@ -190,7 +192,7 @@ try
             int id = int.Parse(Console.ReadLine());
             Console.Clear();
 
-            Console.WriteLine("Enter Product Name:");
+            Console.WriteLine("Edit Product Name:");
             product.ProductName = Console.ReadLine();
             ValidationContext context = new ValidationContext(product, null, null);
             List<ValidationResult> results = new List<ValidationResult>();
@@ -214,8 +216,6 @@ try
                     logger.Info("Validation passed");
                 }
             }
-
-
         }
         //Select what you want to display of products 
         else if (choice == "7")
@@ -314,6 +314,92 @@ try
                 Console.WriteLine("Product not found");
             }
         }
+
+        // Edit a Category (will not display updated/editted category in display category choice "1")
+        else if (choice == "11")
+        {
+            var query = db.Categories.OrderBy(p => p.CategoryId);
+            Console.WriteLine("Select the category id you want to edit\n");
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.CategoryId} {item.CategoryName}");
+            }
+            Console.ForegroundColor = ConsoleColor.White;
+            int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+
+            // Retrieve the category from the database
+            Category category = db.Categories.Find(id);
+
+            Console.WriteLine("Edit Category Name:");
+            string newName = Console.ReadLine();
+
+            // Check for unique name
+            if (db.Categories.Any(c => c.CategoryName == newName))
+            {
+                Console.WriteLine("Name exists");
+            }
+            else
+            {
+                // Update the category name
+                category.CategoryName = newName;
+
+                // Mark the entity as modified
+                db.Entry(category).State = EntityState.Modified;
+
+                // Save changes
+                db.SaveChanges();
+                Console.WriteLine("Category updated successfully");
+            }
+        }
+
+        // Edit a Category 
+        else if (choice == "11")
+        {
+            var query = db.Categories.OrderBy(p => p.CategoryId);
+            Console.WriteLine("Select the category id you want to edit\n");
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.CategoryId} {item.CategoryName}");
+            }
+            Console.ForegroundColor = ConsoleColor.White;
+            int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+
+            // Retrieve the category from the database
+            Category category = db.Categories.Find(id);
+
+            Console.WriteLine("Edit Category Name:");
+            string newName = Console.ReadLine();
+            category.CategoryName = newName; // Set the new name here
+
+            ValidationContext context = new ValidationContext(category, null, null); // Validate the updated object
+            List<ValidationResult> results = new List<ValidationResult>();
+
+            var isValid = Validator.TryValidateObject(category, context, results, true);
+            if (isValid)
+            {
+                logger.Info("Validation passed");
+                // save category to db
+                db.Update(category);
+                db.EditCategory(category);
+                // check for unique name
+                if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
+                {
+                    // generate validation error
+                    isValid = false;
+                    results.Add(new ValidationResult("Name exists", new string[] { "Name" }));
+                }
+                else
+                {
+                    db.SaveChanges();
+                    logger.Info("Validation passed");
+                }
+            }
+        }
+
     } while (choice.ToLower() != "q");
 }
 catch (Exception ex)
