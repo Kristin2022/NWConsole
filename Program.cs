@@ -7,9 +7,9 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 /*
-Add new records to the Categories table
-Edit a specified record from the Categories table
-Display all Categories in the Categories table (CategoryName and Description)
+Add new records to the Categories table  ????is that #2 
+Edit a specified record from the Categories table - done
+Display all Categories in the Categories table (CategoryName and Description) done
 Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
 Display a specific Category and its related active product data (CategoryName, ProductName)
 */
@@ -41,6 +41,7 @@ try
         System.Console.WriteLine("10) Select a product to view all of its information");
         System.Console.WriteLine("11) Edit category");
         System.Console.WriteLine("12) Display Categories and Category descirption");
+        System.Console.WriteLine("13) Display all active Categories and their product(s)");
         Console.WriteLine("\"q\" to quit");
         choice = Console.ReadLine();
         System.Console.WriteLine("");
@@ -402,20 +403,23 @@ try
                 }
             }
         }
-
         // else if (choice == "12")
+        if (choice == "12")
         {
-            if (choice == "12")
-            {
-                var query = db.Categories.OrderBy(p => p.CategoryName);
+            var query = db.Categories.OrderBy(p => p.CategoryName);
 
-                Console.ForegroundColor = ConsoleColor.Blue;
-                foreach (var category in query)
-                {
-                    Console.WriteLine($"{category.CategoryName} - {category.Description}");
-                }
-                Console.ForegroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Blue;
+            foreach (var category in query)
+            {
+                Console.WriteLine($"{category.CategoryName} - {category.Description}");
             }
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+
+        //Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
+        else if (choice == "13")
+        {
+
         }
     } while (choice.ToLower() != "q");
 }
