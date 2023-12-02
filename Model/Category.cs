@@ -17,5 +17,10 @@ namespace NWConsole.Model
         public string Description { get; set; }
 
         public virtual ICollection<Product> Products { get; set; }
+
+        internal static void Select(Func<object, object> value)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

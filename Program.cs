@@ -199,9 +199,9 @@ try
 
             Console.WriteLine("Edit Product Name:");
             string newName = Console.ReadLine();
-            product.ProductName = newName; // Set the new name here
+            product.ProductName = newName; 
 
-            ValidationContext context = new ValidationContext(product, null, null); // Validate the updated object
+            ValidationContext context = new ValidationContext(product, null, null); 
             List<ValidationResult> results = new List<ValidationResult>();
 
             var isValid = Validator.TryValidateObject(product, context, results, true);
@@ -240,7 +240,6 @@ try
             {
                 Console.WriteLine($"{item.ProductId}) {item.ProductName}");
             }
-
             int id = int.Parse(Console.ReadLine());
             Console.Clear();
 
@@ -319,7 +318,7 @@ try
             }
         }
 
-        // Edit a Category (will not display updated/editted category in display category choice "1")
+        // Edit a Category (will not display updated/editted category in display category choice "1")  debugger shows it keeps looping through the foreach yet on choice 6 it works?
         else if (choice == "11")
         {
             var query = db.Categories.OrderBy(p => p.CategoryId);
@@ -349,9 +348,7 @@ try
                 // Update the category name
                 category.CategoryName = newName;
 
-                // Mark the entity as modified
-                db.Entry(category).State = EntityState.Modified;
-
+               
                 // Save changes
                 db.SaveChanges();
                 Console.WriteLine("Category updated successfully");
@@ -403,7 +400,7 @@ try
                 }
             }
         }
-        // else if (choice == "12")
+        // Display Categories and Category discription
         if (choice == "12")
         {
             var query = db.Categories.OrderBy(p => p.CategoryName);
@@ -415,11 +412,19 @@ try
             }
             Console.ForegroundColor = ConsoleColor.White;
         }
-
         //Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
         else if (choice == "13")
         {
-
+            var query = db.Categories.Include("Products").OrderBy(p => p.CategoryName).ToList();
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.CategoryName}");
+                if (db.Products.Any(p => !p.Discontinued))
+                    foreach (Product p in item.Products.Where(p => !p.Discontinued))
+                    {
+                        Console.WriteLine($"\t{p.ProductName}");
+                    }
+            }
         }
     } while (choice.ToLower() != "q");
 }
@@ -456,3 +461,4 @@ static void DisplayProducts(NWContext db, string productChoice)
     }
 }
 logger.Info("Program ended");
+
