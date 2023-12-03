@@ -8,13 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 /*
 Add new records to the Categories table  ????is that #2 
-Edit a specified record from the Categories table - done
-Display all Categories in the Categories table (CategoryName and Description) done
-Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
-Display a specific Category and its related active product data (CategoryName, ProductName)
+
+Use data annotations and handle ALL user errors gracefully & log all errors using NLog
 */
-
-
 // See https://aka.ms/new-console-template for more information
 string path = Directory.GetCurrentDirectory() + "\\nlog.config";
 
@@ -42,6 +38,8 @@ try
         System.Console.WriteLine("11) Edit category");
         System.Console.WriteLine("12) Display Categories and Category descirption");
         System.Console.WriteLine("13) Display all active Categories and their product(s)");
+        System.Console.WriteLine("14) Display a specific Category and its related active product data ");
+        System.Console.WriteLine("15) Select a product add OrderDetail records");
         Console.WriteLine("\"q\" to quit");
         choice = Console.ReadLine();
         System.Console.WriteLine("");
@@ -199,9 +197,9 @@ try
 
             Console.WriteLine("Edit Product Name:");
             string newName = Console.ReadLine();
-            product.ProductName = newName; 
+            product.ProductName = newName;
 
-            ValidationContext context = new ValidationContext(product, null, null); 
+            ValidationContext context = new ValidationContext(product, null, null);
             List<ValidationResult> results = new List<ValidationResult>();
 
             var isValid = Validator.TryValidateObject(product, context, results, true);
@@ -231,7 +229,7 @@ try
             string productChoice = Console.ReadLine();
             DisplayProducts(db, productChoice);
         }
-        // Delete a product  
+        // Delete a specified existing record from the Products table (account for Orphans in related tables) 
         else if (choice == "8")
         {
             var query = db.Products.OrderBy(p => p.ProductId);
@@ -244,9 +242,11 @@ try
             Console.Clear();
 
             Console.WriteLine("Enter the ID of the product you want to delete:");
-            var product = db.Products.Find(id);
+            //Includes orphans(related products)
+            var product = db.Products.Include(p => p.OrderDetails).SingleOrDefault(p => p.ProductId == id);
             if (product != null)
             {
+                db.OrderDetails.RemoveRange(product.OrderDetails);
                 db.Products.Remove(product);
                 db.SaveChanges();
             }
@@ -255,7 +255,7 @@ try
                 Console.WriteLine("Product not found");
             }
         }
-        // Delete a category 
+        // Delete a specified existing record from the Categories table (account for Orphans in related tables)
         else if (choice == "9")
         {
             var query = db.Categories.OrderBy(p => p.CategoryId);
@@ -267,7 +267,8 @@ try
             Console.Clear();
             Console.WriteLine("Enter the id of the category you want to delete:");
             string name = Console.ReadLine();
-            var category = db.Categories.FirstOrDefault(c => c.CategoryId == id);
+            var category = db.Categories.SingleOrDefault(c => c.CategoryId == id);
+            var product = db.Products.Include(p => p.OrderDetails).SingleOrDefault(p => p.ProductId == id); 
             if (category != null)
             {
                 if (category.Products.Any())
@@ -277,6 +278,7 @@ try
                 else
                 {
                     db.Categories.Remove(category);
+                    db.Products.Remove(product);
                     db.SaveChanges();
                     if (db.Categories.Any(c => c.CategoryName == name))
                     {
@@ -318,7 +320,8 @@ try
             }
         }
 
-        // Edit a Category (will not display updated/editted category in display category choice "1")  debugger shows it keeps looping through the foreach yet on choice 6 it works?
+        // Edit a Category (will not display updated/editted category in display category choice "1") 
+        // ISSUE TO FIX debugger shows it keeps looping through the foreach yet on choice 6 it works?
         else if (choice == "11")
         {
             var query = db.Categories.OrderBy(p => p.CategoryId);
@@ -348,7 +351,7 @@ try
                 // Update the category name
                 category.CategoryName = newName;
 
-               
+
                 // Save changes
                 db.SaveChanges();
                 Console.WriteLine("Category updated successfully");
@@ -426,10 +429,93 @@ try
                     }
             }
         }
+        //Display a specific Category and its related active product data (CategoryName, ProductName)
+        else if (choice == "14")
+        {
+            var query = db.Categories.OrderBy(p => p.CategoryId);
+
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.CategoryId}, {item.CategoryName}");
+            }
+
+            Console.WriteLine("Enter the Id you would like to view");
+            int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+
+            var category = db.Categories.Include(c => c.Products).SingleOrDefault(c => c.CategoryId == id);
+
+            if (category != null)
+            {
+                Console.WriteLine($"{category.CategoryName}");
+                foreach (Product p in category.Products.Where(p => !p.Discontinued))
+                {
+                    Console.WriteLine($"\t{p.ProductName}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Category not found");
+            }
+        }
+        else if (choice == "15")
+        {
+            var query = db.Products.OrderBy(p => p.ProductId);
+
+            foreach (var item in query)
+            {
+                Console.WriteLine($"{item.ProductId}, {item.ProductName}");
+            }
+
+            Console.WriteLine("Enter the Product Id you would like to view");
+            int id = int.Parse(Console.ReadLine());
+            Console.Clear();
+
+            var product = db.Products.Find(id);
+            if (product != null)
+            {
+                Console.WriteLine($"Product Id: {product.ProductId}, Product Name {product.ProductName}, Supplier Id: {product.SupplierId}\n Category Id: {product.CategoryId}\n Quantity per unit: {product.QuantityPerUnit}\n Unit price: {product.UnitPrice}\n Units in stock: {product.UnitsInStock}\n Units on order {product.UnitsOnOrder}\n Reorder level: {product.ReorderLevel}\n Discontinued: {product.Discontinued}\n");
+            }
+            else
+            {
+                Console.WriteLine("Product not found");
+            }
+            if (product != null)
+            {
+                
+            
+            
+            ValidationContext context = new ValidationContext(product, null, null); // Validate the updated object
+            List<ValidationResult> results = new List<ValidationResult>();
+
+            var isValid = Validator.TryValidateObject(product, context, results, true);
+            if (isValid)
+            {
+                logger.Info("Validation passed");
+                // save category to db
+                db.Update(product.OrderDetails);
+                db.EditProduct(product);
+                // check for unique name
+                if (db.Products.Any(c => c.ProductName == product.ProductName))
+                {
+                    // generate validation error
+                    isValid = false;
+                    results.Add(new ValidationResult("Record exists", new string[] { "Name" }));
+                }
+                else
+                {
+                    db.SaveChanges();
+                    logger.Info("Validation passed");
+                }
+            }
+        }
+
     } while (choice.ToLower() != "q");
 }
+
 catch (Exception ex)
 {
+    System.Console.WriteLine($"An error has occured: {ex.Message}");
     logger.Error(ex.Message);
 }
 
