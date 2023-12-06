@@ -31,12 +31,14 @@ namespace NWConsole.Model
         public void EditProduct(Product product)
         {
             this.EditProduct(product);
+            this.Update(product);
             this.SaveChanges();
         }
 
         public void EditCategory(Category category)
         {
             this.EditCategory(category);
+            this.Update(category);
             this.SaveChanges();
         }
 
