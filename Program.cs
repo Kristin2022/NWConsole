@@ -425,7 +425,6 @@ try
             {
                 Console.WriteLine($"{item.CategoryId}, {item.CategoryName}");
             }
-
             Console.WriteLine("Enter the Id you would like to view");
             int id = int.Parse(Console.ReadLine());
             Console.Clear();
