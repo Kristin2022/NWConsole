@@ -11,16 +11,18 @@ Done - 5) Add new records to the Products table
 Done - 6) Edit a specified record from the Products table
 Done - 7) Display all records in the Products table (ProductName only) - user decides if they want to see all products, discontinued products, or active (not discontinued) products. Discontinued products should be distinguished from active products.
 Done - 8) Display a specific Product (all product fields should be displayed)
+
 Use NLog to track user functions
 
 Done - 2) Add new records to the Categories table
-NotDone - 11) Edit a specified record from the Categories table
-Display all Categories in the Categories table (CategoryName and Description)
-Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
+Done - 11) Edit a specified record from the Categories table
+Done - 12) Display all Categories in the Categories table (CategoryName and Description)
+Done - 13) Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
 
 
-Delete a specified existing record from the Products table (account for Orphans in related tables)
-Delete a specified existing record from the Categories table (account for Orphans in related tables)
+Done - 10) Delete a specified existing record from the Products table (account for Orphans in related tables)
+Done - 9) Delete a specified existing record from the Categories table (account for Orphans in related tables)
+
 Use data annotations and handle ALL user errors gracefully & log all errors using NLog
 */
 // See https://aka.ms/new-console-template for more information
@@ -47,7 +49,7 @@ try
         System.Console.WriteLine("9) Delete a category");
         System.Console.WriteLine("10) Delete a product");
         System.Console.WriteLine("11) Edit category");
-        System.Console.WriteLine("12) Display Categories and Category descirption");
+        System.Console.WriteLine("12) Display all Categories with their Category name and descirption");
         System.Console.WriteLine("13) Display all active Categories and their product(s)");
         System.Console.WriteLine("14) Display a specific Category and its related active product data ");
         System.Console.WriteLine("15) Add details to products records");
@@ -267,49 +269,57 @@ try
             else
             {
                 Console.WriteLine("Product not found");
+                logger.Error("Product not found.");
             }
         }
 
         // Delete a specified existing record from the Categories table (account for Orphans in related tables) "9) Delete a category");
-        else if (choice == "9")
+        if (choice == "9")
         {
             var query = db.Categories.OrderBy(p => p.CategoryId);
             foreach (var item in query)
             {
                 Console.WriteLine($"{item.CategoryId} {item.CategoryName}");
             }
-            int id = int.Parse(Console.ReadLine());
-            Console.Clear();
             Console.WriteLine("Enter the id of the category you want to delete:");
-            string name = Console.ReadLine();
-            var category = db.Categories.SingleOrDefault(c => c.CategoryId == id);
-            var product = db.Products.Include(p => p.OrderDetails).SingleOrDefault(p => p.ProductId == id);
+            string input = Console.ReadLine();
+            if (!int.TryParse(input, out int id))
+            {
+                logger.Error("Invalid input for category id.");
+                return;
+            }
+            var category = db.Categories.Include(c => c.Products).SingleOrDefault(c => c.CategoryId == id);
             if (category != null)
             {
                 if (category.Products.Any())
                 {
-                    Console.WriteLine("This category has related products. Please delete or reassign these products before deleting the category.");
+                    Console.WriteLine("This category has related products. Do you want to delete these products? (y/n)");
+                    string response = Console.ReadLine();
+                    if (response.ToLower() == "y")
+                    {
+                        db.Products.RemoveRange(category.Products);
+                        db.Categories.Remove(category);
+                        db.SaveChanges();
+                        logger.Warn("Category and related products deleted successfully.");
+                    }
+                    else
+                    {
+                        logger.Info("Category not deleted.");
+                    }
                 }
                 else
                 {
                     db.Categories.Remove(category);
-                    db.Products.Remove(product);
                     db.SaveChanges();
-                    if (db.Categories.Any(c => c.CategoryName == name))
-                    {
-                        Console.WriteLine("Failed to delete the category.");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Category deleted successfully.");
-                    }
+                    logger.Info("Category deleted successfully.");
                 }
             }
             else
             {
-                Console.WriteLine("Category not found");
+                logger.Error("Category not found");
             }
         }
+
         // Delete product  10) Delete a product");
         else if (choice == "10")
         {
@@ -323,21 +333,23 @@ try
             Console.Clear();
 
             Console.WriteLine("Enter the ID of the product you want to delete:");
-            //Includes orphans(related products)
+
             var product = db.Products.Include(p => p.OrderDetails).SingleOrDefault(p => p.ProductId == id);
             if (product != null)
             {
                 db.OrderDetails.RemoveRange(product.OrderDetails);
                 db.Products.Remove(product);
                 db.SaveChanges();
+                logger.Info("Product deleted successfully.");
             }
             else
             {
                 Console.WriteLine("Product not found");
+                logger.Error("Product invalid.");
             }
         }
         // Edit a specified record from the Categories table 
-         else if (choice == "11")
+        else if (choice == "11")
         {
             var query = db.Categories.OrderBy(c => c.CategoryId);
             Console.WriteLine("Select the category id you want to edit");
@@ -365,7 +377,6 @@ try
             {
                 logger.Info("Validation passed");
                 // save category to db
-                //db.EditCategory(category);
                 db.Update(category);
                 db.SaveChanges();
                 logger.Info("Validation passed");
@@ -379,7 +390,7 @@ try
                 logger.Warn("Warning: unable to edit");
             }
         }
-        // Display Categories and Category discription
+        //Display all Categories in the Categories table (CategoryName and Description)Display Categories and Category discription
         if (choice == "12")
         {
             var query = db.Categories.OrderBy(p => p.CategoryName);
