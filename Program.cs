@@ -49,10 +49,10 @@ try
         System.Console.WriteLine("9) Delete a category");
         System.Console.WriteLine("10) Delete a product");
         System.Console.WriteLine("11) Edit category");
-        System.Console.WriteLine("12) Display all Categories with their Category name and descirption");
+        System.Console.WriteLine("12) Display all Categories with their Category name and description");
         System.Console.WriteLine("13) Display all active Categories and their product(s)");
         System.Console.WriteLine("14) Display a specific Category and its related active product data ");
-        System.Console.WriteLine("15) Add details to products records");
+        System.Console.WriteLine("15) Edit all of the records for a specific product records");
         Console.WriteLine("\"q\" to quit");
         choice = Console.ReadLine();
         System.Console.WriteLine("");
@@ -403,19 +403,26 @@ try
             Console.ForegroundColor = ConsoleColor.White;
         }
         //Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
-        else if (choice == "13")
+       else if (choice == "13")
+{
+    var query = db.Categories.Include("Products").OrderBy(p => p.CategoryName).ToList();
+    int totalActiveProducts = 0;
+
+    foreach (var item in query)
+    {
+        int activeProductCount = item.Products.Count(p => !p.Discontinued);
+        totalActiveProducts += activeProductCount;
+        Console.WriteLine($"Category Name: {item.CategoryName}\nActive products: {activeProductCount}");
+        
+        foreach (Product p in item.Products.Where(p => !p.Discontinued))
         {
-            var query = db.Categories.Include("Products").OrderBy(p => p.CategoryName).ToList();
-            foreach (var item in query)
-            {
-                Console.WriteLine($"{item.CategoryName}");
-                if (db.Products.Any(p => !p.Discontinued))
-                    foreach (Product p in item.Products.Where(p => !p.Discontinued))
-                    {
-                        Console.WriteLine($"\t{p.ProductName}");
-                    }
-            }
+            Console.WriteLine($"\tProduct Name: {p.ProductName}");
         }
+    }
+    Console.WriteLine($"Total active products: {totalActiveProducts}");
+}
+
+
         //Display a specific Category and its related active product data (CategoryName, ProductName)
         else if (choice == "14")
         {
@@ -444,29 +451,25 @@ try
                 Console.WriteLine("Category not found");
             }
         }
+        //"15) Edit all of the records for each specific product record
         else if (choice == "15")
         {
             var query = db.Products.OrderBy(p => p.ProductId);
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
 
             foreach (var item in query)
             {
                 Console.WriteLine($"{item.ProductId}, {item.ProductName}");
             }
-
-            Console.WriteLine("Enter the Product Id you would like to view");
+            Console.ForegroundColor = ConsoleColor.White;
             int id = int.Parse(Console.ReadLine());
             Console.Clear();
 
-            var product = db.Products.Find(id);
-            if (product != null)
-            {
-                Console.WriteLine($"Product Id: {product.ProductId}, Product Name {product.ProductName}, Supplier Id: {product.SupplierId}\n Category Id: {product.CategoryId}\n Quantity per unit: {product.QuantityPerUnit}\n Unit price: {product.UnitPrice}\n Units in stock: {product.UnitsInStock}\n Units on order {product.UnitsOnOrder}\n Reorder level: {product.ReorderLevel}\n Discontinued: {product.Discontinued}\n");
-            }
-            else
-            {
-                Console.WriteLine("Product not found");
-            }
+            Product product = db.Products.Find(id);
+            EditProduct(product);
 
+            // Save changes to the database
+            db.SaveChanges();
         }
 
     } while (choice.ToLower() != "q");
@@ -476,6 +479,57 @@ catch (Exception ex)
 {
     System.Console.WriteLine($"An error has occured: {ex.Message}");
     logger.Error(ex.Message);
+}
+
+static void EditProduct(Product product)
+{
+    // Edit Product Name
+    System.Console.WriteLine("Edit Product Name");
+    string newName = Console.ReadLine();
+    product.ProductName = newName;
+
+    // Edit Supplier Id
+    System.Console.WriteLine("Edit Supplier Id:");
+    int newSupplierId = int.Parse(Console.ReadLine());
+    product.SupplierId = newSupplierId;
+
+    // Edit Quantity Per Unit
+    System.Console.WriteLine("Edit Product Quantity Per Unit");
+    string newQuantityPerUnit = Console.ReadLine();
+    product.QuantityPerUnit = newQuantityPerUnit;
+
+    // Edit Unit Price
+    System.Console.WriteLine("Edit Unit Price");
+    decimal newUnitPrice = decimal.Parse(Console.ReadLine());
+    product.UnitPrice = newUnitPrice;
+
+    // Edit Units in Stock
+    System.Console.WriteLine("Edit units in stock");
+    short newUnitsInStock = short.Parse(Console.ReadLine());
+    product.UnitsInStock = newUnitsInStock;
+
+    // Edit Units on Order
+    System.Console.WriteLine("Edit units on order");
+    short newUnitsOnOrder = short.Parse(Console.ReadLine());
+    product.UnitsOnOrder = newUnitsOnOrder;
+
+    // Edit Units in Stock
+    System.Console.WriteLine("Edit reorder level");
+    short newReorderLevel = short.Parse(Console.ReadLine());
+    product.ReorderLevel = newReorderLevel;
+
+    // Edit Discontinued
+
+    System.Console.WriteLine("Edit Discontinued status (true/false):");
+    bool newDiscontinued;
+    if (bool.TryParse(Console.ReadLine(), out newDiscontinued))
+    {
+        product.Discontinued = newDiscontinued;
+    }
+    else
+    {
+        System.Console.WriteLine("Invalid input. Please enter 'true' or 'false'.");
+    }
 }
 
 static void DisplayProducts(NWContext db, string productChoice)
