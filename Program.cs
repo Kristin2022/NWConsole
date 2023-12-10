@@ -1,5 +1,4 @@
-﻿
-using NLog;
+﻿using NLog;
 using System.Linq;
 using NWConsole.Model;
 using System.Collections.Generic;
@@ -7,23 +6,28 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 /*
-Done - 5) Add new records to the Products table
-Done - 6) Edit a specified record from the Products table
-Done - 7) Display all records in the Products table (ProductName only) - user decides if they want to see all products, discontinued products, or active (not discontinued) products. Discontinued products should be distinguished from active products.
-Done - 8) Display a specific Product (all product fields should be displayed)
+Final Project -  Using the Northwind database
 
-Use NLog to track user functions
-
-Done - 2) Add new records to the Categories table
-Done - 11) Edit a specified record from the Categories table
-Done - 12) Display all Categories in the Categories table (CategoryName and Description)
-Done - 13) Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
+Add new records to the Products table -5)
+Edit a specified record from the Products table - 6)
+Display all records in the Products table (ProductName only) - user decides if they want to see all products, discontinued products, or active (not discontinued) products. Discontinued products should be distinguished from active products. -7)
+Display a specific Product (all product fields should be displayed) -8)
+Use NLog to track user functions - bin log_file.txt
 
 
-Done - 10) Delete a specified existing record from the Products table (account for Orphans in related tables)
-Done - 9) Delete a specified existing record from the Categories table (account for Orphans in related tables)
 
+Add new records to the Categories table - 2)
+Edit a specified record from the Categories table -11)
+Display all Categories in the Categories table (CategoryName and Description) -12
+Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName) -13
+Display a specific Category and its related active product data (CategoryName, ProductName) -14
+
+
+
+Delete a specified existing record from the Products table (account for Orphans in related tables) -10
+Delete a specified existing record from the Categories table (account for Orphans in related tables) -9
 Use data annotations and handle ALL user errors gracefully & log all errors using NLog
+
 */
 // See https://aka.ms/new-console-template for more information
 string path = Directory.GetCurrentDirectory() + "\\nlog.config";
@@ -47,11 +51,11 @@ try
         System.Console.WriteLine("7) Select what you want to display of products (all, discontinued, or active)");
         System.Console.WriteLine("8) Select a specific product to view all of its information");
         System.Console.WriteLine("9) Delete a category");
-        System.Console.WriteLine("10) Delete a product");
+        System.Console.WriteLine("10) Delete a specified existing record from the Products table (account for Orphans in related tables)");
         System.Console.WriteLine("11) Edit category");
-        System.Console.WriteLine("12) Display all Categories with their Category name and description");
-        System.Console.WriteLine("13) Display all active Categories and their product(s)");
-        System.Console.WriteLine("14) Display a specific Category and its related active product data ");
+        System.Console.WriteLine("12)Display all Categories in the Categories table (CategoryName and Description)");
+        System.Console.WriteLine("13) Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)");
+        System.Console.WriteLine("14) Display a specific Category and its related active product data (CategoryName, ProductName)");
         System.Console.WriteLine("15) Edit all of the records for a specific product records");
         Console.WriteLine("\"q\" to quit");
         choice = Console.ReadLine();
@@ -403,24 +407,24 @@ try
             Console.ForegroundColor = ConsoleColor.White;
         }
         //Display all Categories and their related active (not discontinued) product data (CategoryName, ProductName)
-       else if (choice == "13")
-{
-    var query = db.Categories.Include("Products").OrderBy(p => p.CategoryName).ToList();
-    int totalActiveProducts = 0;
-
-    foreach (var item in query)
-    {
-        int activeProductCount = item.Products.Count(p => !p.Discontinued);
-        totalActiveProducts += activeProductCount;
-        Console.WriteLine($"Category Name: {item.CategoryName}\nActive products: {activeProductCount}");
-        
-        foreach (Product p in item.Products.Where(p => !p.Discontinued))
+        else if (choice == "13")
         {
-            Console.WriteLine($"\tProduct Name: {p.ProductName}");
+            var query = db.Categories.Include("Products").OrderBy(p => p.CategoryName).ToList();
+            int totalActiveProducts = 0;
+
+            foreach (var item in query)
+            {
+                int activeProductCount = item.Products.Count(p => !p.Discontinued);
+                totalActiveProducts += activeProductCount;
+                Console.WriteLine($"Category Name: {item.CategoryName}\nActive products: {activeProductCount}");
+
+                foreach (Product p in item.Products.Where(p => !p.Discontinued))
+                {
+                    Console.WriteLine($"\tProduct Name: {p.ProductName}");
+                }
+            }
+            Console.WriteLine($"Total active products: {totalActiveProducts}");
         }
-    }
-    Console.WriteLine($"Total active products: {totalActiveProducts}");
-}
 
 
         //Display a specific Category and its related active product data (CategoryName, ProductName)
@@ -471,6 +475,7 @@ try
             // Save changes to the database
             db.SaveChanges();
         }
+
 
     } while (choice.ToLower() != "q");
 }
